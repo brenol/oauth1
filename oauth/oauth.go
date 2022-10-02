@@ -14,7 +14,7 @@
 
 // Package oauth is consumer interface for OAuth 1.0, OAuth 1.0a and RFC 5849.
 //
-// Redirection-based Authorization
+// # Redirection-based Authorization
 //
 // This section outlines how to use the oauth package in redirection-based
 // authorization (http://tools.ietf.org/html/rfc5849#section-2).
@@ -40,7 +40,7 @@
 // secret and verifier, request token credentials using the client RequestToken
 // method. Save the returned credentials for later use in the application.
 //
-// Signing Requests
+// # Signing Requests
 //
 // The Client type has two low-level methods for signing requests, SignForm and
 // SetAuthorizationHeader.
@@ -58,15 +58,15 @@
 // supplied net/http Client. These methods are easy to use, but not as flexible
 // as constructing a request using one of the low-level methods.
 //
-// Context With HTTP Client
+// # Context With HTTP Client
 //
 // A context-enabled method can include a custom HTTP client in the
 // context and execute an HTTP request using the included HTTP client.
 //
-//     hc := &http.Client{Timeout: 2 * time.Second}
-//     ctx := context.WithValue(context.Background(), oauth.HTTPClient, hc)
-//     c := oauth.Client{ /* Any settings */ }
-//     resp, err := c.GetContext(ctx, &oauth.Credentials{}, rawurl, nil)
+//	hc := &http.Client{Timeout: 2 * time.Second}
+//	ctx := context.WithValue(context.Background(), oauth.HTTPClient, hc)
+//	c := oauth.Client{ /* Any settings */ }
+//	resp, err := c.GetContext(ctx, &oauth.Credentials{}, rawurl, nil)
 package oauth // import "github.com/gomodule/oauth1/oauth"
 
 import (
@@ -524,6 +524,21 @@ func (c *Client) SetAuthorizationHeader(header http.Header, credentials *Credent
 	}
 	header.Set("Authorization", v)
 	return nil
+}
+
+func (c *Client) Do(client *http.Client, r *http.Request) (*http.Response, error) {
+	req := &request{
+		method:      r.Method,
+		credentials: &c.Credentials,
+		u:           r.URL,
+	}
+	auth, err := c.authorizationHeader(req)
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Set("Authorization", auth)
+
+	return client.Do(r)
 }
 
 func (c *Client) do(ctx context.Context, urlStr string, r *request) (*http.Response, error) {
